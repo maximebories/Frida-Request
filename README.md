@@ -14,7 +14,7 @@ In this exemple the script capture POST/GET requests avec attaching to the front
 
 ### ToDo:
 * Swift Bridging
-* Capture URLResponse <- **Working on this
+* Capture URLResponse <- **Working on this**
 * Handle from top level Request or Session
 * SQLite Transactions captures
 * Statistical Analysis Framework for recurent Requests/Sessions
