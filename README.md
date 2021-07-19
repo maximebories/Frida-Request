@@ -5,7 +5,7 @@ Work In progress to capture all sorts of data transactions using the Frida frame
 
     frida --usb --attach-frontmost --load NSURL.js --output=$(echo NSURL-"`date +%s`.json") --no-pause
     
-In this exemple the script capture POST/GET requests avec attaching to the frontmost app. Epoch time of the start of the capture is appended to the filename of the log.     
+In this exemple the script capture POST/GET requests attaching to the frontmost app. Epoch time of the start of the capture is appended to the filename of the log.     
     
 
 **It should be noted that spawning migth be a smarter choice here as it is more likely that more requests ared fired at app launch.**
