@@ -1,21 +1,33 @@
 # Frida-Request
-Work In progress to capture all sorts of data transactions using the Frida framework.
 
-### Example usage:
+Capture network requests and responses using the Frida framework in Objective-C and Swift.
 
-    frida --usb --attach-frontmost --load NSURL.js --output=$(echo NSURL-"`date +%s`.json") --no-pause
-    
-In this exemple the script capture POST/GET requests attaching to the frontmost app. Epoch time of the start of the capture is appended to the filename of the log.     
-    
+## Example usage:
+
+    frida --usb --attach-frontmost --load network-request-capture.js --no-pause
+
+This command will attach the script to the frontmost app and begin capturing network requests and responses.
 
 **It should be noted that spawning migth be a smarter choice here as it is more likely that more requests are fired at app launch.**
 
-<img width="1344" alt="NSURL" src="https://user-images.githubusercontent.com/30550722/125180674-09a95580-e1fd-11eb-8e70-70294064d2b1.png">
+## Customization:
 
-### ToDo:
-* Swift Bridging
-* Capture URLResponse  <-  **Working on this**
-* Handle from top level Request or Session
-* SQLite Transactions captures
-* Statistical Analysis for recurent Requests/Sessions
-* Make it a Framework, API, GUI ?
+To customize which network request methods are captured, you can set the following flags in the main function:
+
+- `captureVolley`: Set to `true` to capture network requests using Volley (Android only).
+- `captureAFNetworking`: Set to `true` to capture network requests using AFHTTPSessionManager (Objective-C and Swift).
+- `captureAlamoFire`: Set to `true` to capture network requests using AlamoFire (Objective-C and Swift).
+
+You can also modify the main function to specify which app to attach to by using the `--pid` flag and the PID of the app, or by using the `--spawn` flag and the app's package name.
+
+## To-do:
+
+- [x] Capture network requests and responses using NSURL (Objective-C and Swift)
+- [x] Capture network requests and responses using NSURLConnection (Objective-C and Swift)
+- [x] Capture network requests and responses using AFHTTPSessionManager (Objective-C and Swift)
+- [x] Capture network requests and responses using AlamoFire (Objective-C and Swift)
+- [ ] Capture network requests using Volley (Android only)
+- [ ] Capture URLResponse
+- [ ] Handle requests and responses from top level Request or Session
+- [ ] Capture SQLite local transactions
+- [ ] Perform statistical analysis for recurrent Requests/Sessions
