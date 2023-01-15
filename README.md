@@ -26,8 +26,7 @@ You can also modify the main function to specify which app to attach to by using
 - [x] Capture network requests and responses using NSURLConnection (Objective-C and Swift)
 - [x] Capture network requests and responses using AFHTTPSessionManager (Objective-C and Swift)
 - [x] Capture network requests and responses using AlamoFire (Objective-C and Swift)
-- [ ] Capture network requests using Volley (Android only)
-- [ ] Capture URLResponse
-- [ ] Handle requests and responses from top level Request or Session
+- [x] Capture network requests using Volley (Android only)
+- [x] Capture URLResponse (Objective-C and Swift)
 - [ ] Capture SQLite local transactions
 - [ ] Perform statistical analysis for recurrent Requests/Sessions

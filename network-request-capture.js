@@ -1,5 +1,22 @@
-// Capture network requests using NSURL
-function captureNetworkRequestUsingNSURL() {
+// Copyright (C) 2023 Maxime Bories
+// 
+// This file is part of Frida-Request.
+// 
+// Frida-Request is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Frida-Request is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with Frida-Request.  If not, see <http://www.gnu.org/licenses/>.
+
+// Capture network requests using NSURLSession
+function captureNetworkUsingNSURL() {
 	try {
 		var className = "NSURLSession";
 		var funcName = "- dataTaskWithRequest:completionHandler:";
@@ -20,7 +37,8 @@ function captureNetworkRequestUsingNSURL() {
 				var requestBody = request.HTTPBody;
 
 				// Print the captured data to the console
-				console.log('{\n\t"requestType" : "' + requestMethod + '",');
+				console.log('{\n\t"interceptor" : "NSURLSession",');
+				console.log('\t"requestType" : "' + requestMethod + '",');
 				console.log('\t"url" : "' + requestURL + '",');
 				console.log('\t"body" : "' + requestBody + '",');
 			},
@@ -44,29 +62,33 @@ function captureNetworkRequestUsingNSURL() {
 	}
 }
 
-function captureNetworkRequestUsingNSURLConnection() {
+// Capture network requests using NSURLConnection
+function captureNetworkUsingNSURLConnection() {
 	if (ObjC.available) {
 		try {
 			var className = "NSURLConnection";
 			var funcName = "+ sendSynchronousRequest:returningResponse:error:";
-			var hook = eval('ObjC.classes.' + className + '["' + funcName + '"]');
+			var requestMethodHook = eval('ObjC.classes.' + className + '["' + funcName + '"]');
 
-			Interceptor.attach(hook.implementation, {
+			Interceptor.attach(requestMethodHook.implementation, {
 				onEnter: function (args) {
+					// Get the request object
 					var request = new ObjC.Object(args[2]);
-					var url = request.URL().toString();
-					var method = request.HTTPMethod().toString();
-					var body = request.HTTPBody().toString();
 
-					console.log(
-						"NSURLConnection request: " +
-						method +
-						" " +
-						url +
-						"\nRequest body: " +
-						body +
-						"\n"
-					);
+					// Get the request method
+					var requestMethod = request.HTTPMethod;
+
+					// Get the request URL
+					var requestURL = request.URL;
+
+					// Get the request body
+					var requestBody = request.HTTPBody;
+
+					// Print the captured data to the console
+					console.log('{\n\t"interceptor" : "NSURLConnection",');
+					console.log('\t"requestType" : "' + requestMethod + '",');
+					console.log('\t"url" : "' + requestURL + '",');
+					console.log('\t"body" : "' + requestBody + '"\n\},');
 				},
 			});
 		} catch (error) {
@@ -76,7 +98,7 @@ function captureNetworkRequestUsingNSURLConnection() {
 }
 
 // Capture network requests using AFHTTPSessionManager
-function captureNetworkRequestUsingAFHTTPSessionManager() {
+function captureNetworkUsingAFHTTPSessionManager() {
 	try {
 		var className = "AFHTTPSessionManager";
 		var funcName = "- POST:parameters:success:failure:";
@@ -91,7 +113,8 @@ function captureNetworkRequestUsingAFHTTPSessionManager() {
 				var requestBody = new ObjC.Object(args[2]);
 
 				// Print the captured data to the console
-				console.log('{\n\t"requestType" : "POST",');
+				console.log('{\n\t"interceptor" : "AFHTTPSessionManager",');
+				console.log('\t"requestType" : "POST",');
 				console.log('\t"url" : "' + requestURL + '",');
 				console.log('\t"body" : "' + requestBody + '",');
 			},
@@ -116,10 +139,10 @@ function captureNetworkRequestUsingAFHTTPSessionManager() {
 }
 
 // Capture network requests using Alamofire
-function captureNetworkRequestUsingAlamofire() {
+function captureNetworkUsingAlamofire() {
 	try {
 		var className = "Alamofire.SessionManager";
-		var funcName = "- request:";
+		var funcName = "- dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:";
 		var requestMethodHook = eval('ObjC.classes.' + className + '["' + funcName + '"]');
 
 		Interceptor.attach(requestMethodHook.implementation, {
@@ -127,7 +150,7 @@ function captureNetworkRequestUsingAlamofire() {
 				// Get the request object
 				var request = new ObjC.Object(args[2]);
 
-				// Get the request method (e.g., GET, POST)
+				// Get the request method
 				var requestMethod = request.method;
 
 				// Get the request URL
@@ -137,44 +160,66 @@ function captureNetworkRequestUsingAlamofire() {
 				var requestBody = request.HTTPBody;
 
 				// Print the captured data to the console
-				console.log('{\n\t"requestType" : "' + requestMethod + '",');
+				console.log('{\n\t"interceptor" : "Alamofire",');
+				console.log('\t"requestType" : "' + requestMethod + '",');
 				console.log('\t"url" : "' + requestURL + '",');
+				console.log('\t"body" : "' + requestBody + '",');
+			},
+			onLeave: function (retVal) {
+				// Get the response object
+				var response = new ObjC.Object(retVal).response();
+
+				// Get the response status code
+				var responseStatusCode = response.statusCode();
+
+				// Get the response body
+				var responseBody = response.body().toString();
+
+				// Print the captured data to the console
+				console.log('\t"responseStatusCode" : "' + responseStatusCode + '",');
+				console.log('\t"responseBody" : "' + responseBody + '"\n\},');
+			},
+		});
+	} catch (error) {
+		console.log(error);
+	}
+}
 
 
-				// Main function to execute all the capturing functions
-				function main(captureVolley, captureAFNetworking, captureAlamoFire) {
-					// Check if ObjC is available
-					if (ObjC.available) {
-						// Capture network requests using NSURL
-						captureNetworkRequestUsingNSURL();
+// Main function to execute all the capturing functions
+function main(captureVolley, captureAFNetworking, captureAlamoFire) {
+	// Check if ObjC is available
+	if (ObjC.available) {
+		// Capture network requests using NSURL
+		captureNetworkUsingNSURL();
 
-						// Capture network requests using NSURLConnection
-						captureNetworkRequestUsingNSURLConnection();
-					}
+		// Capture network requests using NSURLConnection
+		captureNetworkUsingNSURLConnection();
+	}
 
-					// Check if AFNetworking is available and captureAFNetworking flag is set
-					if (Module.findExportByName("AFNetworking") && captureAFNetworking) {
-						// Capture network requests using AFHTTPSessionManager
-						captureNetworkRequestUsingAFHTTPSessionManager();
-					}
+	// Check if AFNetworking is available and captureAFNetworking flag is set
+	if (Module.findExportByName("AFNetworking") && captureAFNetworking) {
+		// Capture network requests using AFHTTPSessionManager
+		captureNetworkUsingAFHTTPSessionManager();
+	}
 
-					// Check if AlamoFire is available and captureAlamoFire flag is set
-					if (Module.findExportByName("Alamofire") && captureAlamoFire) {
-						// Capture network requests using AlamoFire
-						captureNetworkRequestUsingAlamoFire();
-					}
+	// Check if AlamoFire is available and captureAlamoFire flag is set
+	if (Module.findExportByName("Alamofire") && captureAlamoFire) {
+		// Capture network requests using AlamoFire
+		captureNetworkUsingAlamoFire();
+	}
 
-					// Check if Volley is available and captureVolley flag is set
-					if (Module.findExportByName("com.android.volley.Request") && captureVolley) {
-						// Capture network requests using Volley
-						captureNetworkRequestUsingVolley();
-					}
-				}
+	// Check if Volley is available and captureVolley flag is set
+	if (Module.findExportByName("com.android.volley.Request") && captureVolley) {
+		// Capture network requests using Volley
+		captureNetworkUsingVolley();
+	}
+}
 
-				// Set the flags to specify which network request methods to capture
-				var captureVolley = false;
-				var captureAFNetworking = true;
-				var captureAlamoFire = true;
+// Set the flags to specify which network request methods to capture
+var captureVolley = false;
+var captureAFNetworking = true;
+var captureAlamoFire = true;
 
-				// Execute the main function
-				main(captureVolley, captureAFNetworking, captureAlamoFire);
+// Execute the main function
+main(captureVolley, captureAFNetworking, captureAlamoFire);
