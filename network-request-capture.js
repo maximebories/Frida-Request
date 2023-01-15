@@ -185,16 +185,52 @@ function captureNetworkUsingAlamofire() {
 	}
 }
 
+function captureNetworkUsingVolley() {
+	try {
+		var className = "com.android.volley.RequestQueue";
+		var funcName = "+ add:tag:";
+		var requestMethodHook = eval('Java.use("' + className + '").' + funcName);
+
+		requestMethodHook.implementation = function (request, tag) {
+			// Get the request URL
+			var requestURL = request.getUrl();
+
+			// Get the request method
+			var requestMethod = request.getMethod();
+
+			// Get the request body
+			var requestBody = request.getBody();
+
+			// Print the captured data to the console
+			console.log('{\n\t"interceptor" : "Volley",');
+			console.log('\t"requestType" : "' + requestMethod + '",');
+			console.log('\t"url" : "' + requestURL + '",');
+			console.log('\t"body" : "' + requestBody + '",');
+
+			// Call the original implementation
+			this.add(request, tag);
+		};
+	} catch (error) {
+		console.log(error);
+	}
+}
 
 // Main function to execute all the capturing functions
 function main(captureVolley, captureAFNetworking, captureAlamoFire) {
-	// Check if ObjC is available
-	if (ObjC.available) {
+	// Check if Java is available (Android)
+	if (Java.available) {
+		// Capture network requests using Volley
+		captureNetworkUsingVolley();
+	}
+	// Check if ObjC is available (iOS/iPadOS/macOS/tvOS/watchOS/bridgeOS)
+	else if (ObjC.available) {
 		// Capture network requests using NSURL
 		captureNetworkUsingNSURL();
 
 		// Capture network requests using NSURLConnection
 		captureNetworkUsingNSURLConnection();
+	} else {
+		console.log("Unsupported platform");
 	}
 
 	// Check if AFNetworking is available and captureAFNetworking flag is set
